@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cat Selector App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        button {
+            margin: 5px;
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        input {
+            margin: 5px;
+            padding: 8px;
+        }
+
+        .result-box {
+            margin: 10px;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Cat Selector App</h1>
+
+<button onclick="showAllNames()">All Names</button>
+
+<label for="healthInput">Health Issues:</label>
+<input type="number" id="healthInput">
+<button onclick="showCatsByHealth()">Show Cats</button>
+
+<button onclick="showWeights()">Weight</button>
+<select id="weightUnit">
+    <option value="imperial">Imperial</option>
+    <option value="metric">Metric</option>
+</select>
+
+<button onclick="showIntelligenceFriendly()">Intelligence - Friendly</button>
+
+<button onclick="showAverageIntelligence()">Average Intelligence</button>
+
+<button onclick="showAverageIntelligenceChildFriendly()">Average Intelligence for Child Friendly</button>
+
+<div id="resultContainer"></div>
+
+<script>
+    const breedsUrl = 'https://api.thecatapi.com/v1/breeds';
+
+    function fetchData(url) {
+        return fetch(url)
+            .then(response => response.json())
+            .catch(error => console.error('Error:', error));
+    }
+
+    function showAllNames() {
+        fetchData(breedsUrl)
+            .then(data => {
+                const names = data.map(cat => cat.name);
+                displayTable(names);
+            });
+    }
+
+    function showCatsByHealth() {
+        const healthIssue = document.getElementById('healthInput').value;
+        const url = `${breedsUrl}?health_issues=${healthIssue}`;
+
+        fetchData(url)
+            .then(data => {
+                const names = data.map(cat => cat.name);
+                displayTable(names);
+            });
+    }
+
+    function showWeights() {
+        const unit = document.getElementById('weightUnit').value;
+
+        fetchData(breedsUrl)
+            .then(data => {
+                const rows = data.map(cat => {
+                    return `<tr><td>${cat.name}</td><td>${cat.weight[unit]} ${unit.toUpperCase()}</td></tr>`;
+                }).join('');
+                displayTable(rows);
+            });
+    }
+
+    function showIntelligenceFriendly() {
+        fetchData(breedsUrl)
+            .then(data => {
+                const rows = data.map(cat => {
+                    return `<tr><td>${cat.name}</td><td>I - ${cat.intelligence}, F - ${cat.child_friendly}</td></tr>`;
+                }).join('');
+                displayTable(rows);
+            });
+    }
+
+    function showAverageIntelligence() {
+        fetchData(breedsUrl)
+            .then(data => {
+                const totalIntelligence = data.reduce((sum, cat) => sum + cat.intelligence, 0);
+                const averageIntelligence = totalIntelligence / data.length;
+                displayTable(`<tr><th>Average Intelligence</th><td>${averageIntelligence.toFixed(2)}</td></tr>`);
+            });
+    }
+
+    function showAverageIntelligenceChildFriendly() {
+        fetchData(breedsUrl)
+            .then(data => {
+                const childFriendlyCats = data.filter(cat => cat.child_friendly > 3);
+                const totalIntelligence = childFriendlyCats.reduce((sum, cat) => sum + cat.intelligence, 0);
+                const averageIntelligence = totalIntelligence / childFriendlyCats.length;
+                displayTable(`<tr><th>Average Intelligence for Child Friendly</th><td>${averageIntelligence.toFixed(2)}</td></tr>`);
+            });
+    }
+
+    function displayTable(content) {
+        const resultContainer = document.getElementById('resultContainer');
+        const table = document.createElement('table');
+        table.innerHTML = content;
+        resultContainer.innerHTML = '';
+        resultContainer.appendChild(table);
+    }
+</script>
+
+</body>
+</html>
